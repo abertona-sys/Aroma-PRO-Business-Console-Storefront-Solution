@@ -4,15 +4,19 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/AuthContext';
 
 export default function Landing() {
-  const { user, login } = useAuth();
+  const { user, login, error, setError } = useAuth();
   const navigate = useNavigate();
 
   const handleStart = async () => {
     if (user) {
       navigate('/admin');
     } else {
-      await login();
-      navigate('/admin');
+      try {
+        await login();
+        navigate('/admin');
+      } catch (err) {
+        console.error("Authentication failed inside landing trigger:", err);
+      }
     }
   };
 
@@ -71,6 +75,84 @@ export default function Landing() {
           An exclusive service designed for <span className="font-semibold text-[#5A5A40]">Aroma PRO VIPs</span>.
         </div>
       </div>
+
+      {/* Modern Botanical Auth Troubleshooting Modal */}
+      {error && (
+        <div className="fixed inset-0 bg-[#000000]/70 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <div className="bg-white border border-[#e5e5e0] rounded-2xl max-w-lg w-full p-8 shadow-2xl relative space-y-6 animate-fade-in text-left">
+            <button 
+              onClick={() => setError(null)}
+              className="absolute top-4 right-4 text-[#666666] hover:text-[#1a1a1a] transition-colors p-2 text-lg font-medium"
+              aria-label="Close dialog"
+            >
+              ✕
+            </button>
+            
+            <div className="space-y-2">
+              <span className="text-[10px] text-[#5A5A40] uppercase tracking-widest font-bold bg-[#5A5A40]/10 px-2.5 py-1 rounded-full">
+                Preview Sandbox Alert
+              </span>
+              <h2 className="font-serif text-2xl font-normal text-[#1a1a1a] leading-tight pt-1">
+                Resolving Sign-In Inside Previews
+              </h2>
+            </div>
+
+            <div className="text-sm text-[#444444] space-y-4 leading-relaxed">
+              <p>
+                Browsers enforce high security criteria that can block the Google Authentication dialogue window. What is happening:
+              </p>
+
+              <div className="space-y-4 pl-3 border-l-2 border-[#5A5A40]/30 py-1">
+                <div>
+                  <strong className="text-[#1a1a1a] font-semibold block text-xs uppercase tracking-wider text-[#5A5A40]">
+                    1. Security Frame Protection (Most Likely)
+                  </strong>
+                  <span className="text-xs text-[#666666] mt-0.5 block font-light">
+                    The app is running inside an <strong>iframe</strong> in your AI Studio preview. Browsers block third-party cookies and window-cross-talk here. <strong>Opening the app in a new browser tab resolves this immediately.</strong>
+                  </span>
+                </div>
+                <div>
+                  <strong className="text-[#1a1a1a] font-semibold block text-xs uppercase tracking-wider text-[#5A5A40]">
+                    2. Firebase Redirect Domain Validation
+                  </strong>
+                  <span className="text-xs text-[#666666] mt-0.5 block font-light">
+                    If this is a newly set-up backend, ensure the domain has been added to the approved authentication list under <strong>Firebase Console &gt; Authentication &gt; Settings &gt; Authorized Domains</strong>.
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-[#f5f5f0] p-4 rounded-xl space-y-2 border border-[#e5e5e0]">
+              <div className="text-[10px] text-[#666666] font-semibold uppercase tracking-wider">
+                This Environment's Approved Hostname:
+              </div>
+              <div className="font-mono text-xs text-[#5A5A40] select-all break-all bg-white p-2 rounded border border-[#e5e5e0]">
+                {window.location.hostname}
+              </div>
+              <div className="text-[10px] text-[#888888] font-light italic">
+                (Add this exact hostname in your Firebase Console setting to whitelist it)
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3 pt-2">
+              <a 
+                href={window.location.origin}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 text-center bg-[#5A5A40] text-white px-5 py-3 rounded-full text-xs uppercase tracking-wider font-semibold hover:bg-[#5A5A40]/95 transition-all shadow-md hover:-translate-y-0.5"
+              >
+                Launch In New Tab ↗
+              </a>
+              <button 
+                onClick={() => setError(null)}
+                className="flex-1 bg-white border border-[#e5e5e0] text-[#1a1a1a] px-5 py-3 rounded-full text-xs uppercase tracking-wider font-semibold hover:bg-[#f5f5f0] transition-colors"
+              >
+                Close & Re-test
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
