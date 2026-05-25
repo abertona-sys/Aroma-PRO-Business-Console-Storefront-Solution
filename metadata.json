@@ -1,0 +1,8 @@
+{
+  "name": "Aroma PRO Business Console",
+  "description": "Premium virtual storefront and batch workspace for artisan wax sachet, wax melt, and squeeze wax melt businesses.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
