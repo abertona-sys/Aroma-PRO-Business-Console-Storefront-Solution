@@ -131,6 +131,8 @@ export default function AdminDashboard() {
    ========================================== */
 function ProfileTab({ storeId }: { storeId: string }) {
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+  const [retryTrigger, setRetryTrigger] = useState(0);
   const [formData, setFormData] = useState({
     storeName: '',
     phone: '',
@@ -141,20 +143,28 @@ function ProfileTab({ storeId }: { storeId: string }) {
   });
 
   useEffect(() => {
-    fetchStoreProfile(storeId).then((data: any) => {
-      if (data) {
-        setFormData({
-          storeName: data.storeName || '',
-          phone: data.phone || '',
-          description: data.description || '',
-          venmo: data.venmo || '',
-          cashapp: data.cashapp || '',
-          paypal: data.paypal || ''
-        });
-      }
-      setLoading(false);
-    });
-  }, [storeId]);
+    setLoading(true);
+    setFetchError(null);
+    fetchStoreProfile(storeId)
+      .then((data: any) => {
+        if (data) {
+          setFormData({
+            storeName: data.storeName || '',
+            phone: data.phone || '',
+            description: data.description || '',
+            venmo: data.venmo || '',
+            cashapp: data.cashapp || '',
+            paypal: data.paypal || ''
+          });
+        }
+        setLoading(false);
+      })
+      .catch((err: any) => {
+        console.error("Firestore Loading Profile Error:", err);
+        setFetchError(err?.message || String(err));
+        setLoading(false);
+      });
+  }, [storeId, retryTrigger]);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -167,6 +177,92 @@ function ProfileTab({ storeId }: { storeId: string }) {
   };
 
   if (loading) return <div className="text-sm font-serif italic text-[#666666]">Retrieving store profile...</div>;
+
+  if (fetchError) {
+    let displayMsg = fetchError;
+    let isDatabaseMissing = false;
+    let isPermissionDenied = false;
+
+    try {
+      if (fetchError.startsWith('{')) {
+        const parsed = JSON.parse(fetchError);
+        displayMsg = parsed.error || fetchError;
+      }
+    } catch (_) {}
+
+    if (
+      displayMsg.toLowerCase().includes("not-found") || 
+      displayMsg.toLowerCase().includes("not found") || 
+      displayMsg.toLowerCase().includes("database") || 
+      displayMsg.toLowerCase().includes("exist") ||
+      displayMsg.toLowerCase().includes("null")
+    ) {
+      isDatabaseMissing = true;
+    }
+    if (displayMsg.toLowerCase().includes("permission") || displayMsg.toLowerCase().includes("denied")) {
+      isPermissionDenied = true;
+    }
+
+    return (
+      <div className="max-w-xl bg-white border border-red-200 rounded-3xl p-8 space-y-6 shadow-md text-left">
+        <div className="flex items-center gap-3 text-red-600">
+          <Info size={28} />
+          <h3 className="font-serif text-xl font-normal text-[#1a1a1a]">Database Connectivity Alert</h3>
+        </div>
+
+        <div className="text-xs text-[#555555] font-light leading-relaxed space-y-3">
+          <p>
+            An error occurred while connecting to your Firestore database.
+          </p>
+          
+          <div className="bg-red-50/50 p-3 rounded-lg border border-red-100 font-mono text-[11px] text-red-700 break-all select-all">
+            {displayMsg}
+          </div>
+
+          {isDatabaseMissing && (
+            <div className="space-y-2 mt-4 bg-[#5A5A40]/5 border border-[#5A5A40]/10 p-4 rounded-xl">
+              <strong className="text-[#5A5A40] block uppercase tracking-wide text-[10px] font-bold">
+                Action Required: Provision Firestore Database
+              </strong>
+              <p className="text-[11px]">
+                In Firebase, creating a project does not automatically activate a database. Please verify:
+              </p>
+              <ul className="list-decimal list-inside space-y-1 text-[11px] pl-1 font-light">
+                <li>Go to the <a href="https://console.firebase.google.com/" target="_blank" rel="noopener noreferrer" className="text-[#5A5A40] underline font-semibold">Firebase Console ↗</a></li>
+                <li>Select your project: <strong>aroma-pro-console</strong></li>
+                <li>In the left menu, click <strong>Firestore Database</strong> and then click <strong>Create Database</strong></li>
+                <li>Select your default Cloud region and continue to finish drafting.</li>
+              </ul>
+            </div>
+          )}
+
+          {isPermissionDenied && (
+            <div className="space-y-2 mt-4 bg-[#5A5A40]/5 border border-[#5A5A40]/10 p-4 rounded-xl">
+              <strong className="text-[#5A5A40] block uppercase tracking-wide text-[10px] font-bold">
+                Action Required: Firestore Security Rules
+              </strong>
+              <p className="text-[11px]">
+                Your Firestore security configurations are rejecting the read request.
+              </p>
+              <ul className="list-disc list-inside space-y-1 text-[11px] pl-1 font-light">
+                <li>We have automatically deployed the compiled security rules to your project, but it may take a minute for Firebase to propagate them.</li>
+                <li>Double check that you have clicked "Create Database" in your Firebase project console first.</li>
+              </ul>
+            </div>
+          )}
+        </div>
+
+        <div className="flex gap-3 pt-2">
+          <button
+            onClick={() => setRetryTrigger(prev => prev + 1)}
+            className="flex-1 bg-[#5A5A40] text-white py-3 rounded-full text-xs uppercase tracking-wider font-semibold hover:bg-[#5A5A40]/90 transition-all shadow-sm cursor-pointer"
+          >
+            Retry Connection / Sync Database
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-3xl space-y-6">

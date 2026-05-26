@@ -11,6 +11,7 @@ export default function PublicCatalog() {
   const [storeProfile, setStoreProfile] = useState<any>(null);
   const [category, setCategory] = useState<string>('all');
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   
   // Sommelier State
   const [sommelierPrompt, setSommelierPrompt] = useState('');
@@ -23,14 +24,22 @@ export default function PublicCatalog() {
 
   useEffect(() => {
     if (storeId) {
+      setLoading(true);
+      setFetchError(null);
       Promise.all([
         fetchActiveProducts(storeId),
         fetchStoreProfile(storeId)
-      ]).then(([prods, profile]) => {
-        setProducts(prods);
-        setStoreProfile(profile);
-        setLoading(false);
-      });
+      ])
+        .then(([prods, profile]) => {
+          setProducts(prods);
+          setStoreProfile(profile);
+          setLoading(false);
+        })
+        .catch((err: any) => {
+          console.error("Public catalog load failed:", err);
+          setFetchError(err?.message || String(err));
+          setLoading(false);
+        });
     }
   }, [storeId]);
 
@@ -93,6 +102,31 @@ export default function PublicCatalog() {
       <div className="min-h-screen bg-[#f5f5f0] flex flex-col items-center justify-center">
         <Wind className="animate-spin text-[#5A5A40] mb-4" size={32} />
         <p className="text-[#64748b] font-serif italic animate-pulse">Gathering essence of the catalogue...</p>
+      </div>
+    );
+  }
+
+  if (fetchError) {
+    let displayMsg = fetchError;
+    try {
+      if (fetchError.startsWith('{')) {
+        const parsed = JSON.parse(fetchError);
+        displayMsg = parsed.error || fetchError;
+      }
+    } catch (_) {}
+
+    return (
+      <div className="min-h-screen bg-[#f5f5f0] flex flex-col items-center justify-center p-6 text-center space-y-4">
+        <h2 className="text-2xl font-serif text-[#1a1a1a] font-normal">Scent Catalog Connection Error</h2>
+        <p className="text-[#64748b] text-sm max-w-md font-light">
+          We experienced an issue connecting to this boutique's catalog. The store owner might be completing their database configuration:
+        </p>
+        <div className="bg-red-50/50 p-3 rounded-lg border border-red-100 font-mono text-xs text-red-700 max-w-lg select-all break-all text-left">
+          {displayMsg}
+        </div>
+        <Link to="/" className="text-[#5A5A40] underline text-xs uppercase tracking-wider font-semibold hover:text-[#5A5A40]/80 pt-2 block">
+          Return to Aroma PRO Home
+        </Link>
       </div>
     );
   }
