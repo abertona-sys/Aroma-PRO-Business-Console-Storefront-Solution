@@ -1,10 +1,9 @@
 {
-  "projectId": "summer-bird-cf4nj",
-  "appId": "1:467988347363:web:e3cd82b340912d1d4448d6",
-  "apiKey": "AIzaSyBsT1X7CSQCYhvUvXEJYBvk9cNxPY_bCnI",
-  "authDomain": "summer-bird-cf4nj.firebaseapp.com",
-  "firestoreDatabaseId": "ai-studio-25eb3d87-0143-43ea-872a-c272464b82bd",
-  "storageBucket": "summer-bird-cf4nj.firebasestorage.app",
-  "messagingSenderId": "467988347363",
-  "measurementId": ""
+  "apiKey": "AIzaSyDesLeB-mJktJScIohALtA07GrrDnOaxJw",
+  "authDomain": "aroma-pro-console.firebaseapp.com",
+  "projectId": "aroma-pro-console",
+  "storageBucket": "aroma-pro-console.firebasestorage.app",
+  "messagingSenderId": "473840651202",
+  "appId": "1:473840651202:web:fcc8272ed57e3ebb53a45b",
+  "firestoreDatabaseId": "(default)"
 }

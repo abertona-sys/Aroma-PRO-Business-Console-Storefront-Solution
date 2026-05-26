@@ -1,5 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { onAuthStateChanged, User, signInWithPopup, GoogleAuthProvider, signOut } from "firebase/auth";
+import { 
+  onAuthStateChanged, 
+  User, 
+  signInWithPopup, 
+  GoogleAuthProvider, 
+  signOut,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword
+} from "firebase/auth";
 import { auth } from "../lib/firebase";
 
 interface AuthContextType {
@@ -7,6 +15,8 @@ interface AuthContextType {
   loading: boolean;
   error: string | null;
   login: () => Promise<void>;
+  loginWithEmail: (email: string, pass: string) => Promise<void>;
+  registerWithEmail: (email: string, pass: string) => Promise<void>;
   logout: () => Promise<void>;
   setError: (err: string | null) => void;
 }
@@ -16,6 +26,8 @@ export const AuthContext = React.createContext<AuthContextType>({
   loading: true,
   error: null,
   login: async () => {},
+  loginWithEmail: async () => {},
+  registerWithEmail: async () => {},
   logout: async () => {},
   setError: () => {},
 });
@@ -45,12 +57,43 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const loginWithEmail = async (email: string, pass: string) => {
+    setError(null);
+    try {
+      await signInWithEmailAndPassword(auth, email, pass);
+    } catch (err: any) {
+      console.error("Email Login Error:", err);
+      setError(err?.code || err?.message || String(err));
+      throw err;
+    }
+  };
+
+  const registerWithEmail = async (email: string, pass: string) => {
+    setError(null);
+    try {
+      await createUserWithEmailAndPassword(auth, email, pass);
+    } catch (err: any) {
+      console.error("Email Registration Error:", err);
+      setError(err?.code || err?.message || String(err));
+      throw err;
+    }
+  };
+
   const logout = async () => {
     await signOut(auth);
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, error, login, logout, setError }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      loading, 
+      error, 
+      login, 
+      loginWithEmail, 
+      registerWithEmail, 
+      logout, 
+      setError 
+    }}>
       {children}
     </AuthContext.Provider>
   );
